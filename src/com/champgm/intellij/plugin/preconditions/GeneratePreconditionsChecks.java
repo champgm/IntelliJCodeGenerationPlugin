@@ -92,9 +92,9 @@ public class GeneratePreconditionsChecks extends AnAction {
                         if ("String".equals(type)) {
                             stringBuilder.append("Argument(!org.apache.commons.lang.StringUtils.isBlank(")
                                     .append(parameterName)
-                                    .append(", \"")
+                                    .append("), \"")
                                     .append(parameterName)
-                                    .append(" may not be null or empty.\"));");
+                                    .append(" may not be null or empty.\");");
                         } else {
                             // Otherwise just check if it's null
                             stringBuilder.append("NotNull(")
@@ -119,7 +119,8 @@ public class GeneratePreconditionsChecks extends AnAction {
 
     /**
      * It turns out that creating proper/acceptable imports is a ridiculously complicated process with the given tools.
-     * I found this suggested workaround in the IntelliJ forums
+     * I found this suggested workaround in the IntelliJ forums. Basically just add all classes with their FQDNs and
+     * then trigger the project's code style manager and it should organize the imports for the user
      */
     private void createImports(final AnActionEvent actionEvent) {
         final Project currentProject = getEventProject(actionEvent);
