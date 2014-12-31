@@ -44,6 +44,12 @@
       <add-to-group group-id="GenerateGroup" anchor="first"/>
       <keyboard-shortcut keymap="$default" first-keystroke="shift meta P"/>
     </action>
+    <action id="MakeParametersFinal"
+            class="com.champgm.intellij.plugin.finalparameters.MakeParametersFinal"
+            text="MakeParametersFinal"
+            description="Makes Parameters Final">
+      <add-to-group group-id="AnalyzeActions" anchor="first"/>
+    </action>
   </actions>
 
 </idea-plugin>
