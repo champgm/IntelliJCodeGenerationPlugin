@@ -6,6 +6,8 @@
 
   <description><![CDATA[
       This plugin was written to try to add a few bells and whistles to IntelliJ that are conducive to laziness and good coding style.<br>
+    More information can be found here: <a href="https://github.com/champgm/IntelliJCodeGenerationPlugin/blob/master/README.md">https://github.com/champgm/IntelliJCodeGenerationPlugin/blob/master/README.md</a>
+
     ]]></description>
 
   <change-notes><![CDATA[
