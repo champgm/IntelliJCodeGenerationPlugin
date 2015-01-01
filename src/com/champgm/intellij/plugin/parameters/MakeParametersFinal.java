@@ -1,4 +1,4 @@
-package com.champgm.intellij.plugin.finalparameters;
+package com.champgm.intellij.plugin.parameters;
 
 
 
