@@ -1,17 +1,15 @@
 <idea-plugin version="2">
   <id>com.champgm.intellij.plugin.preconditions</id>
-  <name>Preconditions Plugin</name>
-  <version>1.0</version>
-  <vendor email="externalgmc@gmail.com" url="http://www.yourcompany.com">champgm</vendor>
+  <name>Mac's Code Generation And Action Plugin</name>
+  <version>1.1</version>
+  <vendor email="externalgmc@gmail.com" url="https://github.com/champgm/IntelliJCodeGenerationPlugin">champgm</vendor>
 
   <description><![CDATA[
-      Enter short description for your plugin here.<br>
-      <em>most HTML tags may be used</em>
+      This plugin was written to try to add a few bells and whistles to IntelliJ that are conducive to laziness and good coding style.<br>
     ]]></description>
 
   <change-notes><![CDATA[
-      Add change notes here.<br>
-      <em>most HTML tags may be used</em>
+      Added a make-method-parameters-final action.<br>
     ]]>
   </change-notes>
 
@@ -42,7 +40,12 @@
             class="com.champgm.intellij.plugin.preconditions.GeneratePreconditionsChecks" text="PreconditionsChecks"
             description="Generates method preconditions checks">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
-      <keyboard-shortcut keymap="$default" first-keystroke="shift meta P"/>
+    </action>
+    <action id="MakeParametersFinal"
+            class="com.champgm.intellij.plugin.parameters.MakeParametersFinal"
+            text="MakeParametersFinal"
+            description="Makes Parameters Final">
+      <add-to-group group-id="AnalyzeActions" anchor="first"/>
     </action>
   </actions>
 
