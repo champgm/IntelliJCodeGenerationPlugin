@@ -1,5 +1,5 @@
 <idea-plugin version="2">
-  <id>com.champgm.intellij.plugin.preconditions</id>
+  <id>com.champgm.intellij.plugin</id>
   <name>Mac's Code Generation And Action Plugin</name>
   <version>1.1</version>
   <vendor email="externalgmc@gmail.com" url="https://github.com/champgm/IntelliJCodeGenerationPlugin">champgm</vendor>
