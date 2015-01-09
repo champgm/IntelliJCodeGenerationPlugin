@@ -142,7 +142,11 @@ public class GeneratePreconditionsChecks extends AnAction {
             if (psiMethod.isConstructor() && anchor != null) {
                 for (Map.Entry<String, String> entry : stringAndPrimitiveConstructorParameters.build().entrySet()) {
                     // Create a set-local-field statement
-                    final StringBuilder stringBuilder = new StringBuilder("this.").append(entry.getKey()).append(" = ").append(entry.getKey()).append(";");
+                    final StringBuilder stringBuilder = new StringBuilder("this.")
+                            .append(entry.getKey())
+                            .append(" = ")
+                            .append(entry.getKey())
+                            .append(";");
 
                     // build the Statement object
                     final PsiStatement statementFromText = elementFactory.createStatementFromText(stringBuilder.toString(), psiMethod);
