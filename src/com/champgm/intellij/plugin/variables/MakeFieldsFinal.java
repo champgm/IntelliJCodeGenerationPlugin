@@ -1,20 +1,14 @@
-package com.champgm.intellij.plugin.fields;
-
-import java.util.Collection;
+package com.champgm.intellij.plugin.variables;
 
 import com.champgm.intellij.plugin.PluginUtil;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.searches.ReferencesSearch;
 
 public class MakeFieldsFinal extends AnAction {
 
@@ -45,25 +39,10 @@ public class MakeFieldsFinal extends AnAction {
         // Our fields
         ImmutableSet.Builder<PsiField> unmodifiedFields = ImmutableSet.builder();
         for (PsiField field : fields) {
-            // Err, found a bug where this does weird stuff in Enum classes. There are probably more of these exception
-            // cases out there.
+            // Err, found a bug where this does weird stuff in Enum classes.
+            // There are probably more of these exception cases out there.
             if (!(field instanceof PsiEnumConstant)) {
-                // All references to those fields
-                final Collection<PsiReference> references = ReferencesSearch.search(field).findAll();
-                boolean modified = false;
-                for (PsiReference psiReference : references) {
-                    // The piece of a statement which uses the reference to retrieve the field
-                    final PsiElement referringElement = psiReference.getElement();
-                    // The full statement containing the referring element
-                    final PsiElement parent = referringElement.getParent();
-
-                    // Thankfully, an assignment is an easily identifiable type of element
-                    if (parent instanceof PsiAssignmentExpression) {
-
-                        modified = true;
-                    }
-                }
-                if (!modified) {
+                if (!PluginUtil.isModified(field)) {
                     unmodifiedFields.add(field);
                 }
             }
