@@ -1,4 +1,4 @@
-package com.champgm.intellij.plugin.parameters;
+package com.champgm.intellij.plugin.variables;
 
 import com.champgm.intellij.plugin.PluginUtil;
 import com.intellij.openapi.actionSystem.AnAction;
