@@ -6,6 +6,8 @@
 
   <description><![CDATA[
       This plugin was written to try to add a few bells and whistles to IntelliJ that are conducive to laziness and good coding style.<br>
+    More information can be found here: <a href="https://github.com/champgm/IntelliJCodeGenerationPlugin/blob/master/README.md">https://github.com/champgm/IntelliJCodeGenerationPlugin/blob/master/README.md</a>
+
     ]]></description>
 
   <change-notes><![CDATA[
@@ -37,15 +39,25 @@
   <actions>
     <!-- Add your actions here -->
     <action id="generatePreconditionsChecks"
-            class="com.champgm.intellij.plugin.preconditions.GeneratePreconditionsChecks" text="PreconditionsChecks"
+            class="com.champgm.intellij.plugin.preconditions.GeneratePreconditionsChecks"
+            text="Add Preconditions Checks"
             description="Generates method preconditions checks">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
     <action id="MakeParametersFinal"
-            class="com.champgm.intellij.plugin.parameters.MakeParametersFinal"
-            text="MakeParametersFinal"
+            class="com.champgm.intellij.plugin.variables.MakeParametersFinal"
+            text="Make Parameters Final"
             description="Makes Parameters Final">
-      <add-to-group group-id="AnalyzeActions" anchor="first"/>
+      <add-to-group group-id="RefactoringMenu" anchor="first"/>
+    </action>
+    <action id="MakeFieldsFinal"
+            class="com.champgm.intellij.plugin.variables.MakeFieldsFinal"
+            text="Make Fields Final"
+            description="Make Fields Final">
+      <add-to-group group-id="RefactoringMenu" anchor="first"/>
+    </action>
+    <action id="MakeVariablesFinal" class="com.champgm.intellij.plugin.variables.MakeVariablesFinal" text="Make Variables Final" description="Make Variables Final">
+      <add-to-group group-id="RefactoringMenu" anchor="first"/>
     </action>
   </actions>
 

@@ -1,7 +1,13 @@
 package com.champgm.intellij.plugin.preconditions;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 import org.jetbrains.annotations.NotNull;
 
+import com.champgm.intellij.plugin.PluginUtil;
+import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -10,11 +16,12 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiStatement;
@@ -50,6 +57,7 @@ public class GeneratePreconditionsChecks extends AnAction {
             @Override
             protected void run() throws Throwable {
                 generateAndAttachPreconditions(psiMethod, actionEvent);
+                createImports(actionEvent);
             }
         }.execute();
     }
@@ -63,10 +71,12 @@ public class GeneratePreconditionsChecks extends AnAction {
         if (methodBody != null) {
 
             // This is the "anchor" element, which we'll use to place each new statement
-            final PsiJavaToken anchor = methodBody.getLBrace();
+            PsiElement anchor = methodBody.getLBrace();
+
+            // Keep track of String parameters in Constructors, so they can be assigned later.
+            ImmutableMap.Builder<String, String> stringAndPrimitiveConstructorParameters = ImmutableMap.builder();
 
             for (final PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
-
                 // Extract the type and name of each parameter
                 final PsiTypeElement typeElement = parameter.getTypeElement();
                 if (typeElement != null) {
@@ -90,12 +100,22 @@ public class GeneratePreconditionsChecks extends AnAction {
 
                         // If it's a string, we want to use StringUtils to check for blank or null strings
                         if ("String".equals(type)) {
+                            // note the parameter for later assignment
+                            if (psiMethod.isConstructor()) {
+                                stringAndPrimitiveConstructorParameters.put(parameterName, type);
+                            }
                             stringBuilder.append("Argument(!org.apache.commons.lang.StringUtils.isBlank(")
                                     .append(parameterName)
                                     .append("), \"")
                                     .append(parameterName)
                                     .append(" may not be null or empty.\");");
                         } else {
+                            // put an assignment in front if this is a constructor
+                            if (psiMethod.isConstructor()) {
+                                checkForAndAddField(actionEvent, parameterName, type);
+                                stringBuilder.insert(0, new StringBuilder("this.").append(parameterName).append(" = "));
+                            }
+
                             // Otherwise just check if it's null
                             stringBuilder.append("NotNull(")
                                     .append(parameterName)
@@ -107,13 +127,69 @@ public class GeneratePreconditionsChecks extends AnAction {
                         // build each new statement from a string
                         final PsiStatement statementFromText = elementFactory.createStatementFromText(stringBuilder.toString(), psiMethod);
 
-                        // and add it after the left brace
-                        methodBody.addAfter(statementFromText, anchor);
+                        // and add it after the left brace, and record its position in the anchor variable so we know
+                        // where to put the next statement
+                        anchor = methodBody.addAfter(statementFromText, anchor);
+                    } else {
+                        if (psiMethod.isConstructor()) {
+                            stringAndPrimitiveConstructorParameters.put(parameterName, type);
+                        }
                     }
                 }
-
             }
-            createImports(actionEvent);
+
+            // Assign in any String parameters
+            if (psiMethod.isConstructor() && anchor != null) {
+                for (Map.Entry<String, String> entry : stringAndPrimitiveConstructorParameters.build().entrySet()) {
+                    // Create a set-local-field statement
+                    final StringBuilder stringBuilder = new StringBuilder("this.")
+                            .append(entry.getKey())
+                            .append(" = ")
+                            .append(entry.getKey())
+                            .append(";");
+
+                    // build the Statement object
+                    final PsiStatement statementFromText = elementFactory.createStatementFromText(stringBuilder.toString(), psiMethod);
+
+                    // and add it after the last statement created above and record position
+                    anchor = methodBody.addAfter(statementFromText, anchor);
+
+                    // Add the field to the class if it doesn't exist.
+                    checkForAndAddField(actionEvent, entry.getKey(), entry.getValue());
+                }
+            }
+
+        }
+    }
+
+    private void checkForAndAddField(final AnActionEvent actionEvent, final String parameterName, final String parameterType) {
+        // Get the whole class for the action
+        final PsiClass psiClass = PluginUtil.getPsiClassFromContext(actionEvent);
+
+        // Get its fields
+        final List<PsiField> fields = Arrays.asList(psiClass.getAllFields());
+
+        // Check if any are missing
+        boolean foundField = false;
+        for (PsiField field : fields) {
+            if (parameterName.equals(field.getName())) {
+                foundField = true;
+            }
+        }
+
+        // If any are missing...
+        if (!foundField) {
+            // Find the start of the class
+            final PsiElement lBrace = psiClass.getLBrace();
+            if (lBrace != null) {
+                // Build a creation statement
+                final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
+                final StringBuilder stringBuilder = new StringBuilder("private final ").append(parameterType).append(" ").append(parameterName).append(";");
+                final PsiStatement statementFromText = elementFactory.createStatementFromText(stringBuilder.toString(), psiClass);
+
+                // Add it
+                psiClass.addAfter(statementFromText, lBrace);
+            }
         }
     }
 
