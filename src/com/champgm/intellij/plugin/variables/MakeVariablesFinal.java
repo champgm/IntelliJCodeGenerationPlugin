@@ -38,26 +38,7 @@ public class MakeVariablesFinal extends AnAction {
             if (body != null) {
                 final PsiElement[] methodStatements = body.getChildren();
                 for (PsiElement statement : methodStatements) {
-                    if (statement instanceof PsiDeclarationStatement) {
-                        final PsiDeclarationStatement localVariableDeclaration = (PsiDeclarationStatement) statement;
-                        final PsiElement[] declarationPieces = localVariableDeclaration.getChildren();
-                        for (PsiElement psiElement : declarationPieces) {
-                            if (psiElement instanceof PsiLocalVariable) {
-                                final PsiLocalVariable localVariable = (PsiLocalVariable) psiElement;
-                                if (!PluginUtil.isModified(localVariable)) {
-                                    unmodifiedLocalVariables.add(localVariable);
-                                }
-                            }
-                        }
-                    } else {
-                        if (statement instanceof PsiForeachStatement) {
-                            final PsiForeachStatement foreach = (PsiForeachStatement) statement;
-                            final PsiParameter iterationParameter = foreach.getIterationParameter();
-                            if (!PluginUtil.isModified(iterationParameter)) {
-                                unmodifiedLocalVariables.add(iterationParameter);
-                            }
-                        }
-                    }
+                    traverse(unmodifiedLocalVariables, statement);
                 }
             }
         }
@@ -66,6 +47,32 @@ public class MakeVariablesFinal extends AnAction {
             if (modifierList != null) {
                 modifierList.setModifierProperty("final", true);
             }
+        }
+    }
+
+    private void traverse(final ImmutableSet.Builder<PsiVariable> unmodifiedLocalVariables, final PsiElement statement) {
+        if (statement instanceof PsiDeclarationStatement) {
+            final PsiDeclarationStatement localVariableDeclaration = (PsiDeclarationStatement) statement;
+            final PsiElement[] declarationPieces = localVariableDeclaration.getChildren();
+            for (PsiElement psiElement : declarationPieces) {
+                if (psiElement instanceof PsiLocalVariable) {
+                    final PsiLocalVariable localVariable = (PsiLocalVariable) psiElement;
+                    if (!PluginUtil.isModified(localVariable)) {
+                        unmodifiedLocalVariables.add(localVariable);
+                    }
+                }
+            }
+        } else {
+            if (statement instanceof PsiForeachStatement) {
+                final PsiForeachStatement foreach = (PsiForeachStatement) statement;
+                final PsiParameter iterationParameter = foreach.getIterationParameter();
+                if (!PluginUtil.isModified(iterationParameter)) {
+                    unmodifiedLocalVariables.add(iterationParameter);
+                }
+            }
+        }
+        for(PsiElement child : statement.getChildren()){
+            traverse(unmodifiedLocalVariables,child);
         }
     }
 
