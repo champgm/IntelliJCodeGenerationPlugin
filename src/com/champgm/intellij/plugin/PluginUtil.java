@@ -14,6 +14,8 @@ import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPostfixExpression;
+import com.intellij.psi.PsiPrefixExpression;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -53,7 +55,9 @@ public class PluginUtil {
             final PsiElement parent = referringElement.getParent();
 
             // Thankfully, an assignment is an easily identifiable type of element
-            if (parent instanceof PsiAssignmentExpression) {
+            if (parent instanceof PsiAssignmentExpression ||
+                    parent instanceof PsiPostfixExpression ||
+                    parent instanceof PsiPrefixExpression) {
                 // But... make sure the assignment isn't to be ignored
                 if (!ignoredAssignments.contains(parent)) {
                     modified = true;
