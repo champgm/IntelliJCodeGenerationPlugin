@@ -98,7 +98,7 @@ public class PluginUtil {
             final PsiCodeBlock body = constructor.getBody();
             if (body != null) {
                 // get their contents
-                for (PsiStatement statement : body.getStatements()) {
+                for (final PsiStatement statement : body.getStatements()) {
                     final PsiElement actualStatement = statement.getFirstChild();
                     // Check for assignments
                     if (actualStatement instanceof PsiAssignmentExpression) {
