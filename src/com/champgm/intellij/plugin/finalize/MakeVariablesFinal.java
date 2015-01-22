@@ -1,13 +1,9 @@
-package com.champgm.intellij.plugin.variables;
+package com.champgm.intellij.plugin.finalize;
 
-import org.jetbrains.annotations.NotNull;
-
+import com.champgm.intellij.plugin.Maction;
 import com.champgm.intellij.plugin.PluginUtil;
 import com.google.common.collect.ImmutableSet;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.PsiElement;
@@ -18,26 +14,16 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiVariable;
 
-public class MakeVariablesFinal extends AnAction {
+public class MakeVariablesFinal extends Maction {
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent actionEvent) {
-        final PsiClass psiClass = PluginUtil.getPsiClassFromContext(actionEvent);
-        new WriteCommandAction.Simple(psiClass.getProject(), psiClass.getContainingFile()) {
-            @Override
-            protected void run() throws Throwable {
-                addNecessaryFinalModifiers(psiClass);
-            }
-        }.execute();
-    }
-
-    private void addNecessaryFinalModifiers(final PsiClass psiClass) {
-        final PsiMethod[] methods = psiClass.getMethods();
+    protected void doAction(final AnActionEvent actionEvent) {
+        final PsiMethod[] methods = PluginUtil.getPsiClassFromContext(actionEvent).getMethods();
         final ImmutableSet.Builder<PsiVariable> unmodifiedLocalVariables = ImmutableSet.builder();
         for (final PsiMethod method : methods) {
             final PsiCodeBlock body = method.getBody();
             if (body != null) {
                 final PsiElement[] methodStatements = body.getChildren();
-                for (PsiElement statement : methodStatements) {
+                for (final PsiElement statement : methodStatements) {
                     traverse(unmodifiedLocalVariables, statement);
                 }
             }
@@ -54,7 +40,7 @@ public class MakeVariablesFinal extends AnAction {
         if (statement instanceof PsiDeclarationStatement) {
             final PsiDeclarationStatement localVariableDeclaration = (PsiDeclarationStatement) statement;
             final PsiElement[] declarationPieces = localVariableDeclaration.getChildren();
-            for (PsiElement psiElement : declarationPieces) {
+            for (final PsiElement psiElement : declarationPieces) {
                 if (psiElement instanceof PsiLocalVariable) {
                     final PsiLocalVariable localVariable = (PsiLocalVariable) psiElement;
                     if (!PluginUtil.isModified(localVariable)) {
@@ -71,14 +57,8 @@ public class MakeVariablesFinal extends AnAction {
                 }
             }
         }
-        for(PsiElement child : statement.getChildren()){
-            traverse(unmodifiedLocalVariables,child);
+        for (final PsiElement child : statement.getChildren()) {
+            traverse(unmodifiedLocalVariables, child);
         }
-    }
-
-    @Override
-    public void update(@NotNull final AnActionEvent e) {
-        final PsiClass psiClass = PluginUtil.getPsiClassFromContext(e);
-        e.getPresentation().setEnabled(psiClass != null);
     }
 }
