@@ -45,18 +45,21 @@
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
     <action id="MakeParametersFinal"
-            class="com.champgm.intellij.plugin.variables.MakeParametersFinal"
+            class="com.champgm.intellij.plugin.finalize.MakeParametersFinal"
             text="Make Parameters Final"
             description="Makes Parameters Final">
       <add-to-group group-id="RefactoringMenu" anchor="first"/>
     </action>
     <action id="MakeFieldsFinal"
-            class="com.champgm.intellij.plugin.variables.MakeFieldsFinal"
+            class="com.champgm.intellij.plugin.finalize.MakeFieldsFinal"
             text="Make Fields Final"
             description="Make Fields Final">
       <add-to-group group-id="RefactoringMenu" anchor="first"/>
     </action>
-    <action id="MakeVariablesFinal" class="com.champgm.intellij.plugin.variables.MakeVariablesFinal" text="Make Variables Final" description="Make Variables Final">
+    <action id="MakeVariablesFinal"
+            class="com.champgm.intellij.plugin.finalize.MakeVariablesFinal"
+            text="Make Variables Final"
+            description="Make Variables Final">
       <add-to-group group-id="RefactoringMenu" anchor="first"/>
     </action>
   </actions>
