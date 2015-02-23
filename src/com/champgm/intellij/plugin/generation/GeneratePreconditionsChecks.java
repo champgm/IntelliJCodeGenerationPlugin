@@ -1,4 +1,4 @@
-package com.champgm.intellij.plugin.preconditions;
+package com.champgm.intellij.plugin.generation;
 
 import java.util.Arrays;
 import java.util.List;
@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeBlock;
@@ -25,7 +24,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 
 public class GeneratePreconditionsChecks extends Maction {
@@ -171,22 +169,6 @@ public class GeneratePreconditionsChecks extends Maction {
                 // Add it
                 psiClass.addAfter(statementFromText, lBrace);
             }
-        }
-    }
-
-    /**
-     * It turns out that creating proper/acceptable imports is a ridiculously complicated process with the given tools.
-     * I found this suggested workaround in the IntelliJ forums. Basically just add all classes with their FQDNs and
-     * then trigger the project's code style manager and it should organize the imports for the user
-     */
-    private void createImports(final AnActionEvent actionEvent) {
-        final Project currentProject = getEventProject(actionEvent);
-        final PsiFile currentFile = actionEvent.getData(LangDataKeys.PSI_FILE);
-        if (currentProject != null && currentFile != null) {
-            // Get an instance of this project's coding-style manager
-            JavaCodeStyleManager.getInstance(currentProject)
-                    // Tell it to shorten all class references accordingly
-                    .shortenClassReferences(currentFile);
         }
     }
 

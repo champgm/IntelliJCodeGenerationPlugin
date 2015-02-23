@@ -23,9 +23,18 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 
 public class PluginUtil {
-    public static PsiClass getPsiClassFromContext(final AnActionEvent e) {
-        final PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
-        final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    /**
+     * This method will take an {@link com.intellij.openapi.actionSystem.AnActionEvent} and return the
+     * {@link com.intellij.psi.PsiClass} where that event was triggered. This will usually be the first thing needed by
+     * an action to begin performing itself.
+     * 
+     * @param actionEvent
+     *            the event
+     * @return the class where the event took place
+     */
+    public static PsiClass getPsiClassFromContext(final AnActionEvent actionEvent) {
+        final PsiFile psiFile = actionEvent.getData(LangDataKeys.PSI_FILE);
+        final Editor editor = actionEvent.getData(PlatformDataKeys.EDITOR);
         if (psiFile == null || editor == null) {
             return null;
         }
