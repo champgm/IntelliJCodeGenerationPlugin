@@ -17,14 +17,24 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPostfixExpression;
 import com.intellij.psi.PsiPrefixExpression;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 
 public class PluginUtil {
-    public static PsiClass getPsiClassFromContext(final AnActionEvent e) {
-        final PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
-        final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    /**
+     * This method will take an {@link com.intellij.openapi.actionSystem.AnActionEvent} and return the
+     * {@link com.intellij.psi.PsiClass} where that event was triggered. This will usually be the first thing needed by
+     * an action to begin performing itself.
+     * 
+     * @param actionEvent
+     *            the event
+     * @return the class where the event took place
+     */
+    public static PsiClass getPsiClassFromContext(final AnActionEvent actionEvent) {
+        final PsiFile psiFile = actionEvent.getData(LangDataKeys.PSI_FILE);
+        final Editor editor = actionEvent.getData(PlatformDataKeys.EDITOR);
         if (psiFile == null || editor == null) {
             return null;
         }
@@ -50,13 +60,30 @@ public class PluginUtil {
         boolean modified = false;
         for (final PsiReference psiReference : references) {
             // The piece of a statement which uses the reference to retrieve the field
-            final PsiElement referringElement = psiReference.getElement();
+            final PsiReferenceExpression child = (PsiReferenceExpression) psiReference.getElement();
             // The full statement containing the referring element
-            final PsiElement parent = referringElement.getParent();
+            final PsiElement parent = child.getParent();
 
-            // Thankfully, an assignment is an easily identifiable type of element
-            if (parent instanceof PsiAssignmentExpression ||
-                    parent instanceof PsiPostfixExpression ||
+            // An assignment expression can be the direct parent of a PsiReference on the right side of an equals sign.
+            // An example:
+            //
+            // String unmodifiedString = "I will not change";
+            // String modifiedString = "I will change";
+            // modifiedString = unmodifiedString;
+            //
+            // In this case, a "parent instanceof PsiAssignmentExpression" check will return true for both
+            // "modifiedString" and "unmodifiedString"
+            // One should only assume that an element is being modified if it is the first element of the assignment
+            // expression
+            if (parent instanceof PsiAssignmentExpression) {
+                if (parent.getFirstChild().equals(child)) {
+                    modified = true;
+                    break;
+                }
+            }
+
+            // Also, we could have stuff like "element++" which also modifies the element
+            if (parent instanceof PsiPostfixExpression ||
                     parent instanceof PsiPrefixExpression) {
                 // But... make sure the assignment isn't to be ignored
                 if (!ignoredAssignments.contains(parent)) {
@@ -98,7 +125,7 @@ public class PluginUtil {
             final PsiCodeBlock body = constructor.getBody();
             if (body != null) {
                 // get their contents
-                for (PsiStatement statement : body.getStatements()) {
+                for (final PsiStatement statement : body.getStatements()) {
                     final PsiElement actualStatement = statement.getFirstChild();
                     // Check for assignments
                     if (actualStatement instanceof PsiAssignmentExpression) {

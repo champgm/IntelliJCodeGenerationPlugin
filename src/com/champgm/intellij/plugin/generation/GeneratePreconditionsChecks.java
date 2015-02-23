@@ -1,4 +1,4 @@
-package com.champgm.intellij.plugin.preconditions;
+package com.champgm.intellij.plugin.generation;
 
 import java.util.Arrays;
 import java.util.List;
@@ -6,15 +6,13 @@ import java.util.Map;
 
 import org.jetbrains.annotations.NotNull;
 
+import com.champgm.intellij.plugin.Maction;
 import com.champgm.intellij.plugin.PluginUtil;
 import com.google.common.collect.ImmutableMap;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeBlock;
@@ -26,18 +24,9 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 
-public class GeneratePreconditionsChecks extends AnAction {
-    @Override
-    public void actionPerformed(@NotNull final AnActionEvent actionEvent) {
-        // Get the method in which the action occurred
-        final PsiMethod psiMethod = getPsiMethodFromEvent(actionEvent);
-        // And pass it into the generation util method
-        createAndExecuteAction(psiMethod, actionEvent);
-    }
-
+public class GeneratePreconditionsChecks extends Maction {
     @Override
     public void update(@NotNull final AnActionEvent event) {
         // This method is a check to see if this action is applicable at a certain point
@@ -49,20 +38,14 @@ public class GeneratePreconditionsChecks extends AnAction {
         event.getPresentation().setEnabled(psiMethodFromEvent != null);
     }
 
-    /**
-     * Util method to create and execute a WriteCommandAction
-     */
-    private void createAndExecuteAction(@NotNull final PsiMethod psiMethod, final AnActionEvent actionEvent) {
-        new WriteCommandAction.Simple(psiMethod.getProject(), psiMethod.getContainingFile()) {
-            @Override
-            protected void run() throws Throwable {
-                generateAndAttachPreconditions(psiMethod, actionEvent);
-                createImports(actionEvent);
-            }
-        }.execute();
+    @Override
+    protected void doAction(final AnActionEvent actionEvent) {
+        generateAndAttachPreconditions(actionEvent);
+        createImports(actionEvent);
     }
 
-    private void generateAndAttachPreconditions(final PsiMethod psiMethod, final AnActionEvent actionEvent) {
+    private void generateAndAttachPreconditions(final AnActionEvent actionEvent) {
+        final PsiMethod psiMethod = getPsiMethodFromEvent(actionEvent);
         // This will be used to build individual statements from strings
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiMethod.getProject());
 
@@ -74,7 +57,7 @@ public class GeneratePreconditionsChecks extends AnAction {
             PsiElement anchor = methodBody.getLBrace();
 
             // Keep track of String parameters in Constructors, so they can be assigned later.
-            ImmutableMap.Builder<String, String> stringAndPrimitiveConstructorParameters = ImmutableMap.builder();
+            final ImmutableMap.Builder<String, String> stringAndPrimitiveConstructorParameters = ImmutableMap.builder();
 
             for (final PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
                 // Extract the type and name of each parameter
@@ -140,16 +123,12 @@ public class GeneratePreconditionsChecks extends AnAction {
 
             // Assign in any String parameters
             if (psiMethod.isConstructor() && anchor != null) {
-                for (Map.Entry<String, String> entry : stringAndPrimitiveConstructorParameters.build().entrySet()) {
+                for (final Map.Entry<String, String> entry : stringAndPrimitiveConstructorParameters.build().entrySet()) {
                     // Create a set-local-field statement
-                    final StringBuilder stringBuilder = new StringBuilder("this.")
-                            .append(entry.getKey())
-                            .append(" = ")
-                            .append(entry.getKey())
-                            .append(";");
 
                     // build the Statement object
-                    final PsiStatement statementFromText = elementFactory.createStatementFromText(stringBuilder.toString(), psiMethod);
+                    final PsiStatement statementFromText = elementFactory
+                            .createStatementFromText("this." + entry.getKey() + " = " + entry.getKey() + ";", psiMethod);
 
                     // and add it after the last statement created above and record position
                     anchor = methodBody.addAfter(statementFromText, anchor);
@@ -171,7 +150,7 @@ public class GeneratePreconditionsChecks extends AnAction {
 
         // Check if any are missing
         boolean foundField = false;
-        for (PsiField field : fields) {
+        for (final PsiField field : fields) {
             if (parameterName.equals(field.getName())) {
                 foundField = true;
             }
@@ -184,28 +163,12 @@ public class GeneratePreconditionsChecks extends AnAction {
             if (lBrace != null) {
                 // Build a creation statement
                 final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
-                final StringBuilder stringBuilder = new StringBuilder("private final ").append(parameterType).append(" ").append(parameterName).append(";");
-                final PsiStatement statementFromText = elementFactory.createStatementFromText(stringBuilder.toString(), psiClass);
+                final PsiStatement statementFromText = elementFactory
+                        .createStatementFromText("private final " + parameterType + " " + parameterName + ";", psiClass);
 
                 // Add it
                 psiClass.addAfter(statementFromText, lBrace);
             }
-        }
-    }
-
-    /**
-     * It turns out that creating proper/acceptable imports is a ridiculously complicated process with the given tools.
-     * I found this suggested workaround in the IntelliJ forums. Basically just add all classes with their FQDNs and
-     * then trigger the project's code style manager and it should organize the imports for the user
-     */
-    private void createImports(final AnActionEvent actionEvent) {
-        final Project currentProject = getEventProject(actionEvent);
-        final PsiFile currentFile = actionEvent.getData(LangDataKeys.PSI_FILE);
-        if (currentProject != null && currentFile != null) {
-            // Get an instance of this project's coding-style manager
-            JavaCodeStyleManager.getInstance(currentProject)
-                    // Tell it to shorten all class references accordingly
-                    .shortenClassReferences(currentFile);
         }
     }
 
