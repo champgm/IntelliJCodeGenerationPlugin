@@ -59,36 +59,41 @@ public class PluginUtil {
         final Collection<PsiReference> references = ReferencesSearch.search(element).findAll();
         boolean modified = false;
         for (final PsiReference psiReference : references) {
-            // The piece of a statement which uses the reference to retrieve the field
-            final PsiReferenceExpression child = (PsiReferenceExpression) psiReference.getElement();
-            // The full statement containing the referring element
-            final PsiElement parent = child.getParent();
+            try {
+                // The piece of a statement which uses the reference to retrieve the field
+                final PsiReferenceExpression child = (PsiReferenceExpression) psiReference.getElement();
+                // The full statement containing the referring element
+                final PsiElement parent = child.getParent();
 
-            // An assignment expression can be the direct parent of a PsiReference on the right side of an equals sign.
-            // An example:
-            //
-            // String unmodifiedString = "I will not change";
-            // String modifiedString = "I will change";
-            // modifiedString = unmodifiedString;
-            //
-            // In this case, a "parent instanceof PsiAssignmentExpression" check will return true for both
-            // "modifiedString" and "unmodifiedString"
-            // One should only assume that an element is being modified if it is the first element of the assignment
-            // expression
-            if (parent instanceof PsiAssignmentExpression) {
-                if (parent.getFirstChild().equals(child)) {
-                    modified = true;
-                    break;
+                // An assignment expression can be the direct parent of a PsiReference on the right side of an equals
+                // sign.
+                // An example:
+                //
+                // String unmodifiedString = "I will not change";
+                // String modifiedString = "I will change";
+                // modifiedString = unmodifiedString;
+                //
+                // In this case, a "parent instanceof PsiAssignmentExpression" check will return true for both
+                // "modifiedString" and "unmodifiedString"
+                // One should only assume that an element is being modified if it is the first element of the assignment
+                // expression
+                if (parent instanceof PsiAssignmentExpression) {
+                    if (parent.getFirstChild().equals(child)) {
+                        modified = true;
+                        break;
+                    }
                 }
-            }
 
-            // Also, we could have stuff like "element++" which also modifies the element
-            if (parent instanceof PsiPostfixExpression ||
-                    parent instanceof PsiPrefixExpression) {
-                // But... make sure the assignment isn't to be ignored
-                if (!ignoredAssignments.contains(parent)) {
-                    modified = true;
+                // Also, we could have stuff like "element++" which also modifies the element
+                if (parent instanceof PsiPostfixExpression ||
+                        parent instanceof PsiPrefixExpression) {
+                    // But... make sure the assignment isn't to be ignored
+                    if (!ignoredAssignments.contains(parent)) {
+                        modified = true;
+                    }
                 }
+            } catch (final ClassCastException cce) {
+                System.out.println("Tried to modify a field-level reference which was not a field. Most likely a javadoc reference.");
             }
         }
         return modified;
