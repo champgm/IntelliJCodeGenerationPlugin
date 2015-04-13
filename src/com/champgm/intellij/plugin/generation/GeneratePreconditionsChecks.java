@@ -87,7 +87,7 @@ public class GeneratePreconditionsChecks extends Maction {
                             if (psiMethod.isConstructor()) {
                                 stringAndPrimitiveConstructorParameters.put(parameterName, type);
                             }
-                            stringBuilder.append("Argument(!org.apache.commons.lang.StringUtils.isBlank(")
+                            stringBuilder.append("Argument(org.apache.commons.lang.StringUtils.isNotBlank(")
                                     .append(parameterName)
                                     .append("), \"")
                                     .append(parameterName)
