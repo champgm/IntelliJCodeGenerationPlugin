@@ -25,7 +25,7 @@ public class MakeFieldsFinal extends Maction {
     protected void doAction(final AnActionEvent actionEvent) {
         final PsiClass psiClass = PluginUtil.getPsiClassFromContext(actionEvent);
         final ImmutableSet<PsiAssignmentExpression> constructorAssignmentExpressions = PluginUtil.getConstructorAssignmentExpressions(psiClass);
-        final PsiField[] fields = psiClass.getFields();
+        final PsiField[] fields = psiClass.getAllFields();
         // Our fields
         final ImmutableSet.Builder<PsiField> unmodifiedFields = ImmutableSet.builder();
         for (final PsiField field : fields) {
