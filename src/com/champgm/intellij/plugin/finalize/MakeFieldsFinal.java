@@ -9,6 +9,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.impl.compiled.ClsModifierListImpl;
 
 public class MakeFieldsFinal extends Maction {
     /**
@@ -25,10 +26,17 @@ public class MakeFieldsFinal extends Maction {
     protected void doAction(final AnActionEvent actionEvent) {
         final PsiClass psiClass = PluginUtil.getPsiClassFromContext(actionEvent);
         final ImmutableSet<PsiAssignmentExpression> constructorAssignmentExpressions = PluginUtil.getConstructorAssignmentExpressions(psiClass);
-        final PsiField[] fields = psiClass.getFields();
+        final PsiField[] fields = psiClass.getAllFields();
         // Our fields
         final ImmutableSet.Builder<PsiField> unmodifiedFields = ImmutableSet.builder();
         for (final PsiField field : fields) {
+            final PsiModifierList modifierList = field.getModifierList();
+
+            // This indicates that the field we are looking at is not modifiable
+            if (modifierList instanceof ClsModifierListImpl) {
+                break;
+            }
+
             // Err, found a bug where this does weird stuff in Enum classes.
             // There are probably more of these exception cases out there.
             if (field instanceof PsiEnumConstant) {
@@ -37,7 +45,6 @@ public class MakeFieldsFinal extends Maction {
 
             // This code checks to make sure the @Mock annotation isn't on a field, which really instantiates a
             // field with a mocked version of the class even though you can't really tell from here.
-            final PsiModifierList modifierList = field.getModifierList();
             if (modifierList != null) {
                 if (modifierList.findAnnotation("org.mockito.Mock") != null) {
                     break;
